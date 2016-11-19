@@ -1,0 +1,3 @@
+*.js linguist-language=TeX
+*.css linguist-language=TeX
+*.html linguist-language=TeX
