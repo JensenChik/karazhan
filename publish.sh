@@ -14,7 +14,7 @@ rm -rf setup/*.aux
 rm -rf setup/*.log
 
 # 生成html
-rm rm -rf html
+rm -rf html
 mkdir -p html/${article_name}/${article_name}
 cp main.pdf html
 cd html
