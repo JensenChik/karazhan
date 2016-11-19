@@ -22,5 +22,17 @@
     "title":"深度学习在图像识别中的应用",
     "abstract":"简单介绍图像识别中的深度神经网络应用，内容涉及深度置信网络、马尔可夫链蒙特卡罗方法以及深度卷积网络",
     "date":"2015-06-29"
+  },
+  {
+    "url":"/article/GAE",
+    "title":"生成式对抗网络",
+    "abstract":"《Generative Adversarial Nets》 翻译",
+    "date":"2016-10-23"
+  },
+  {
+    "url":"/article/GAE",
+    "title":"基于反向传播的无监督域自调整",
+    "abstract":"《Unsupervised Domain Adaptation by Backpropagation》 翻译",
+    "date":"2016-10-23"
   }
 ]
