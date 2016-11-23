@@ -1,0 +1,11 @@
+xelatex main.tex
+rm -f *.aux
+rm -f *.log
+rm -f *.dvi
+rm -f *.toc
+rm -f *.synctex.gz
+rm -f body/*.aux
+rm -f body/*.log
+rm -f setup/*.aux
+rm -f setup/*.log
+evince main.pdf
