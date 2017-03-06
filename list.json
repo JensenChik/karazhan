@@ -1,11 +1,5 @@
 [
   {
-    "url":"/article/WGAN",
-    "title":"Wasserstein GAN",
-    "abstract":"Wasserstein GAN翻译 ing",
-    "date":"2017-03-07"
-  },
-  {
     "url":"/article/GAE",
     "title":"生成式对抗网络",
     "abstract":"《Generative Adversarial Nets》 翻译",

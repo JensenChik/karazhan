@@ -18,7 +18,7 @@ rm -rf html
 mkdir -p html/${article_name}/${article_name}
 cp main.pdf html
 cd html
-pdf2htmlEX --fit-width 900 --split-pages 1 --dest-dir ${article_name} --page-filename ${article_name}/part-%d.page main.pdf
+pdf2htmlEX --split-pages 1 --dest-dir ${article_name} --page-filename ${article_name}/part-%d.page main.pdf
 mkdir pages
 mv ${article_name}/${article_name}/* pages/
 mv ${article_name}/main.html main.html
