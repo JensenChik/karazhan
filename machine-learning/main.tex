@@ -1,0 +1,47 @@
+\documentclass[oneside]{ctexbook}
+\include{setup/Packages}
+\include{setup/Command}
+\include{setup/Setting}
+\include{setup/Fonts}
+\include{cover}
+
+\begin{document}
+\cleardoublepage
+\maketitle
+\tableofcontents
+
+\chapter*{前言}
+\addcontentsline{toc}{chapter}{前言}
+
+
+\part{监督学习} % (fold)
+\label{prt:监督学习_}
+\clearpage
+
+\include{part/supervised-learning/glm}
+\include{part/supervised-learning/kernel}
+\include{part/supervised-learning/non-parameter}
+\include{part/supervised-learning/tree}
+\include{part/supervised-learning/nn}
+% part 监督学习_ (end)
+
+
+\part{非监督学习} % (fold)
+\label{prt:非监督学习}
+
+\include{part/unsupervised-learning/cluster}
+\include{part/unsupervised-learning/dimension_reduce}
+% part 非监督学习_ (end)
+
+
+\part{独立于算法之外的机器学习} % (fold)
+\label{prt:独立于算法之外的机器学习}
+\include{part/others/optimize}
+\include{part/others/feature-engine}
+\include{part/others/model-selection}
+% part 独立于算法之外的机器学习_ (end)
+
+\end{document}
+
+
+
