@@ -1,0 +1,15 @@
+\lstset{language=Python}
+\begin{lstlisting}[caption={波士顿房价问题的解析解法\label{code:boston_house_price_solve1}}]
+import numpy as np
+from sklearn.datasets import load_boston
+import pylab
+from scipy.linalg import inv
+
+x, y = load_boston(return_X_y=True)
+x = np.vstack((x[:, 5], np.ones_like(y))).T
+y = y.reshape(-1, 1)
+invert = np.dot(inv(np.dot(x.T, x)), x.T)
+theta = np.dot(invert, y)
+print(theta.T)
+# [[  9.10210898 -34.67062078]]
+\end{lstlisting}

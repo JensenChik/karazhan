@@ -1,15 +1,192 @@
+% !TEX root = ../../main.tex
 \chapter{线性模型} % (fold)
 \label{cha:线性模型}
 
 \section{线性回归及其正则} % (fold)
 \label{sec:线性回归及其正则}
+对于线性回归我们再熟悉不过，然而我们中的很大一部分人，只知道线性回归是利用一条直线（或高维空间下的超平面）去拟合目标值，却对一些细节的知识点知之甚少，比如，线性回归为什么叫线性回归？为什么目标函数选择平方误差？什么情况下线性回归不 work？如果不work又应该如何调整？本小节的目的不在于介绍什么是线性回归，而是对线性回归做一个稍微深入一点的 insight。
 
+回归（Regression）这一个词最初起源于英国高尔顿爵士在人类遗传学的研究\cite{wiki.Regression_toward_the_mean}，他发现一个有趣的现象是，如果父亲的身高高于平均值，那么儿子身高大于父亲身高的概率会低于小于父亲身高的概率，对应的，如果父亲的身高低于平均值，那么儿子身高小于父亲身高的概率会低于大于父亲身高的概率。高尔顿讲这种现象总结为，偏离中心的父母其后代往往更靠近中心，并称之为 Regression，因为Regression有倒退、衰退的含义，所以这个过程描述为{\wei 向着平凡回归}，而回归分析，其目的就是寻找那条平凡的曲线，即，寻找数据背后的脊梁。
 
 
 \subsection{线性回归} % (fold)
 \label{sub:线性回归}
+\input{part/supervised-learning/images/boston_house_price}
+现在让我们来考虑一个称之为波士顿房价的问题\cite{harrison1978hedonic}，在这个数据集中一共有506个样本，每个样本包含13个特征，分别为
+\begin{enumerate}
+	\item CRIM：城镇人均犯罪率
+    \item ZN：住宅用地超过25000平方英尺的比例
+    \item INDUS：城镇非零售商用土地的比例
+    \item CHAS：是否位于查理斯河边上
+    \item NOX：一氧化氮浓度
+    \item RM：住宅平均房间数
+	\item AGE：1940 年之前建成的自用房屋比例
+	\item DIS：到波士顿五个中心区域的加权距离
+	\item RAD：放射性高速公路的接近指数
+	\item TAX：每一万美元的全值财产税率
+	\item PTRATIO：城镇师生比例
+	\item B：$1000(Bk - 0.63)^ 2$，其中 $Bk$ 指代城镇中黑人的比例
+	\item LSTAT：人口中地位低下者的比例
+\end{enumerate}
 
-% subsection 线性回归 (end)
+为了简单起见，我们只选择其中的第6个变量，即住宅建筑每户人家的平均房间数，作为自变量$x$，对应的因变量$y$为住宅建筑的价格，其散点图如图\ref{fig:boston_house_price}所示。观察数据的走势，大体上呈线性关系\footnote{对于一些异常点，其$y$值统一为$50.0$}，自然而然的你会想到用一个直线来刻画这个数据，即
+\begin{equation}
+	y = wx + b
+\end{equation}
+
+那么机器学习的目的就是利用这506个样本去学习这条曲线的参数，也就是$w$和$b$，学习过程中使用的目标函数为平方误差，即
+
+\begin{equation}\label{equ:loss_of_linear_regress}
+	L(w, b) = \Big(y - (wx + b)\Big)^2
+\end{equation}
+
+
+
+\subsubsection{学习算法} % (fold)
+\label{ssub:学习算法}
+我们考虑这个问题的解析法，对于式\ref{equ:loss_of_linear_regress}而言，未知的是$w$和$b$两个变量，当只有一个样本的时候，$w$和$b$有无穷多解，更一般地，在线性模型中，当样本量$N$小于模型参数规模$M$时，解有无穷多个\footnote{因为此时是不满秩的状态}，我们称其为欠定方程组；当$N$恰好等于$M$时，模型有唯一解或无解\footnote{取决于是否满秩}，此时称为正定方程组；当$N$大于$M$时，模型无解，此时称为超定方程组。注意一点，我们说无解只是说不存在一组参数使得模型能恰好拟合所有样本，当无解时，我们学习到的参数是近似解。
+
+现在我们有506个样本，而未知的变量只有两个，方程组可以描述为
+\begin{equation}\label{eq:欠定方程组}
+\begin{bmatrix}
+	x_{1} & 1\\
+	x_{2} & 1\\
+	\vdots & \vdots\\
+	x_{506} &  1\\
+\end{bmatrix}
+\begin{bmatrix}
+	w\\
+	b\\
+\end{bmatrix}
+= 
+\begin{bmatrix}
+	y_{1}\\
+	y_{2}\\
+	\vdots\\
+	y_{506}
+\end{bmatrix}
+\end{equation}
+
+不妨将式\ref{eq:欠定方程组}简记为
+\begin{equation}
+	X\theta = Y
+\end{equation}
+
+如果$X$是非奇异的，那么我们立刻就能得到解$\theta = X^{-1}Y$，但现在$X$不是一个方阵而是一个超定矩阵，所以不能直接求逆，为此，我们两边同时乘上$X^T$，则得到
+\begin{equation}
+	X^TX\theta = X^TY
+\end{equation}
+此时$X^TX$是方阵，那么就能两边乘上它的逆$(X^TX)^{-1}$，得到最终的解
+\begin{equation}
+	\theta = (X^TX)^{-1}X^TY
+\end{equation}
+其中，我们称$(X^TX)^{-1}X^T$为$X$的伪逆矩阵
+
+更一般的，$(X^TX)$并不一定可逆，当不可逆时，往往会加上一个微小量的对角矩阵，因此，通用的解为
+\begin{equation}
+	\theta = \lim_{\epsilon\rightarrow 0}(X^TX + \epsilon I)^{-1}X^TY
+\end{equation}
+
+
+这种解法之所以成立，是因为其背后隐含了平方误差的假设。现在让我们从平方误差的假设出发，重新推导一遍，对于目标函数
+\begin{equation}
+	L(\theta) = || X\theta - Y||^2 = \sum_{i=1}^{506}(X_i\theta - Y_i)^2
+\end{equation}
+为了求最小值，我们对$\theta$求导数，得到
+\begin{equation}
+	\begin{split}
+	\frac{d L(\theta)}{d \theta} &= \sum_{i=1}^{506}2(X_i\theta - Y_i)X_i\\
+	&= 2X^T(X\theta - Y)
+	\end{split}
+\end{equation}
+当导数为0时取得极值，因此必要条件为
+\begin{equation}
+X^TX\theta = X^TY
+\end{equation}
+同样的，我们再一次推出了
+\begin{equation}
+	\theta = (X^TX)^{-1}X^TY
+\end{equation}
+
+上述算法的Python实现如代码\ref{code:boston_house_price_solve1}所式	，其回归结果如图\ref{fig:boston_house_price}中的红线所式
+\input{part/supervised-learning/codes/boston_house_price_solve1}
+
+% subsubsection 学习算法 (end)
+
+\subsubsection{残差分析} % (fold)
+\label{ssub:残差分析}
+现在我们从残差的角度讨论一下为什么目标函数选择平方误差，首先，如图\ref{fig:boston_house_price_3d} 所示，我们假设拟合的残差服从均值为0，方差恒定的高斯分布，即对于
+\begin{equation}
+	y = \theta x + \epsilon
+\end{equation}
+其残差$\epsilon$服从
+\begin{equation}
+\epsilon \sim \mathcal{N}(0, \sigma^2)
+\end{equation}
+
+\input{part/supervised-learning/images/boston_house_price_3d}
+
+那么对于每一个样本$(x_i, y_i)$，得到的残差概率为
+\begin{equation}
+	P(x_i, y_i, \sigma^2|\theta) = \frac{1}{\sqrt{2\pi\sigma^2}}
+	\exp\Bigg(-\frac{(y_i - \theta x_i)^2}{2\sigma^2}\Bigg)
+\end{equation}
+常数项对于对数似然最大化没有影响，因此
+\begin{equation}
+	\log \mathcal{L} \propto  \sum_{i=1}^N - (y_i - \theta x_i)^2
+\end{equation}
+所以，平方误差作为目标函数是对数似然最大化推导出来的结果，而不是我们拍脑袋选出来的。要最大化对数似然，等价于最小化平方误差。
+
+
+% subsubsection 残差分析 (end)
+
+
+\subsubsection{异方差} % (fold)
+\label{ssub:异方差}
+接下来我们讨论异方差的问题，现在我们的自变量选定为第 13 个变量，即⼈口中地位低下者的⽐例，因变量依然选择房价，那么数据的分布图，以及利用线性回归所得到的曲线如图\ref{fig:boston_house_price2}(a)所式。
+\input{part/supervised-learning/images/boston_house_price2}
+
+观察数据的分布不难发现其并不呈线性趋势，若此时强行采用线性回归，则在头部和尾部并不能很好的拟合数据。绘制预测变量与残差的关系如图\ref{fig:boston_house_price2}(b)所示，我们可以看到，随着预测值的增长，残差的方差也在不断的增大，这显然与我们之前的假设，即，残差服从均值为0，方差恒定的高斯分布相矛盾，因为这里的方差是变化的，我们称这种现象为异方差。
+
+像图\ref{fig:boston_house_price2}(b)这种大体上呈现锥形的残差图，其出现的原因是因变量服从乘法模型
+\begin{equation}\label{equ:product_model}
+	y = (\theta x)\epsilon
+\end{equation}
+而不是加法模型
+\begin{equation}
+	y = \theta x + \epsilon
+\end{equation}
+在这个条件下，残差为
+\begin{equation}
+	(\theta x)\epsilon - \theta x = \theta x(\epsilon - 1)
+\end{equation}
+因此，随着预测值$\theta x$的增加，残差也在不断的增加，并且，对于残差的方差
+\begin{equation}
+	Var\Big((\theta x)\epsilon - \theta x \Big) = (\theta x)^2 Var(\epsilon)
+\end{equation}
+所以，随着预测值$\theta x$的增加，残差的方差也在呈平方级增长。对于式\ref{equ:product_model}所描述的乘法模型，合适的方法是，不直接回归因变量$y$，而是回归其对数值，通过取对数的方式，便可以将乘法模型转换回加法模型，即
+\begin{equation}
+	\log y = \log (\theta x)\epsilon = \log\theta x + \log \epsilon
+\end{equation}
+
+\input{part/supervised-learning/images/boston_log_res}
+
+如图\ref{fig:boston_house_price}所示是回归$\log y$后的残差图，我们可以看到，对数变换使得残差的方差变得稳定，锥形得到抑制，我们认为对数模型比没有采用变换的模型其回归结果更可靠。
+
+对于抛物线形状的残差图，是由于数据呈泊松分布造成的，此时的应变量往往是每个单位（时间、距离、体积等）内的计数，应该回归$\sqrt{y}$；对于椭球形状的残差图，是由于数据呈二项分布造成的，此时的应变量往往是百分数、占比等概率值，或者$n$次实验中成功的次数占比，应该回归$\sin^{-1}\sqrt{y}$；对于呈锥形的残差图，是由于误差服从乘法模型，此时的应变量往往是商业、人文、经济类型的数据，应该回归$\ln y$。
+
+% subsubsection 异方差 (end)
+
+
+\subsubsection{共线性} % (fold)
+\label{ssub:共线性}
+
+% subsubsection 共线性 (end)
+
+
+
+
+% subsection 线性回归 ( end)
 
 
 
