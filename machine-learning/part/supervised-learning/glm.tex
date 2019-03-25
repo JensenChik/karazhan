@@ -180,13 +180,132 @@ X^TX\theta = X^TY
 
 \subsubsection{共线性} % (fold)
 \label{ssub:共线性}
+现在我们把自变量扩展到多个，并考虑其共线性问题，为此，我们选择第6、9、10个变量，即住宅平均房间数、放射性⾼速公路的接近指数、每⼀万美元的全值财产税率作为自变量，房价作为因变量，进行多重线性回归。为了描述共线性的问题，我们每次只随机选取506个样本中的一部分样本进行学习，然后测量多次回归后，参数的方差，这个过程如代码\ref{code:boston_house_price_co_linear} 所示。
+\input{part/supervised-learning/codes/co-learner}
+
+可以看出，对于各个自变量与偏置，多次回归得到的参数估计其方差为
+\begin{equation}
+	[\sigma_6,\sigma_9,\sigma_{10},\sigma_b] \simeq [0.679,0.069,0.003,4.745]
+\end{equation}
+
+观察一下变量9，其方差约为0.069，若我们将第10个变量更换为第8个变量，即到波⼠顿五个中⼼区域的加权距离，现在我们选择第6、9、8个变量作为自变量，因变量依然选择房价，与上述同样的操作，多次回归后得到的参数估计方差为
+\begin{equation}
+	[\sigma_6,\sigma_9,\sigma_8,\sigma_b] \simeq [ 0.665,0.042,0.108,4.086]
+\end{equation}
+
+\input{part/supervised-learning/images/var_linear_relation}
+
+再次观察一下变量9，其方差现在约为0.042，大约降低了$50\%$左右，而变量6和偏置的方差没有显著的变化。之所以出现这种现象的原因在于，第一次实验中的三个变量，变量9和变量10是线性相关的，我们可以绘制其关系如图\ref{fig:var_linear_relation}(a)所示。而第二次实验中，我们把与变量9相关的变量10剔除掉，替换成与变量9不太相关的变量8，使得变量9的方差显著降低。为了验证我们这一说辞，我们不妨再做一次实验，将变量8替换成变量9加上一个区间在0到0.1的随机均匀噪声，即，现在的三个自变量为：变量6、变量9、带微小噪声的变量9，重复执行一次上述过程，将得到
+\begin{equation}
+	[\sigma_6,\sigma_9,\sigma_{9^*},\sigma_b] \simeq [ 0.656, 9.270, 9.276, 4.110]
+\end{equation}
+
+由于现在的第三个因变量与第二个因变量是高度相关的，所以可以看到，方差显著地增长到了9.27。这种因为变量之间存在相关性而使得参数估计的方差变大的现象，我们成之为共线性问题。
+
+接下来我们分析一下为什么会产生这种现象。由于平方误差假设下的最优参数估计为
+\begin{equation}
+\begin{split}
+	\hat{\theta} &= (X^TX)^{-1}X^TY \\ 
+	&= (X^TX)^{-1}X^T(\theta X + \epsilon)\\
+	&= \theta + (X^TX)^{-1}X^T\epsilon
+\end{split}
+\end{equation}
+
+并且，$\hat{\theta}$是对$\theta$的无偏估计，即
+\begin{equation}
+\begin{split}
+	E(\hat{\theta}) &= E\big[\theta + (X^TX)^{-1}X^T\epsilon\big] \\
+	&=\theta + (X^TX)^{-1}X^TE(\epsilon) \\
+	&=\theta
+\end{split}
+\end{equation}
+那么对于参数估计的协方差，有
+\begin{equation}
+\begin{split}
+Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big)\big(\hat{\theta} - E(\hat{\theta})\big)^T\Big] \\
+&= E\Big[(\hat{\theta} - \theta)(\hat{\theta} - \theta)^T\Big] \\
+&= E\Big[\big((X^TX)^{−1}X^T\epsilon\big)\big((X^TX)^{−1}X^T\epsilon\big)^T\Big] \\
+&= E\Big[(X^TX)^{−1}X^T\epsilon\epsilon^TX(XX^T)^{−1}\Big] \\
+&= (X^TX)^{−1}X^TE(\epsilon\epsilon^T)X(XX^T)^{−1}\\
+&= (X^TX)^{−1}X^T\sigma^2 IX(XX^T)^{−1}\\
+&= \sigma^2 I(X^TX)^{−1}X^TX(XX^T)^{−1}\\
+&= \sigma^2 (XX^T)^{−1}\\
+\end{split}
+\end{equation}
+其中$\sigma^2$是残差的方差。因此，对于某一个自变量的参数$\theta_i$，其方差为$\sigma^2(XX^T)^{−1}$在对角线上的第$i$个元素。
+
+接下来，为了简单起见，我们通过所有自变量的方差之和来衡量整体方差
+\begin{equation}
+	tr\big[\sigma^2(XX^T)^{−1}\big] = \sigma^2\sum_i\frac{1}{\lambda_i}
+\end{equation}
+其中 $\lambda_i$是矩阵$XX^T$的特征值。当变量间的共线性越强，行列式$XX^T$将去向于0，必定会存在某个$\lambda$趋向于0，从而导致$tr\big[\sigma^2(XX^T)^{−1}\big]$趋向于无穷。这也就是为什么共线性会导致参数估计的方差变大的原因。
+
+我们从直观上在来感受一下共线性的问题，假设使用两个变量$x_1$，$x_2$进行拟合，$x_2$的最优估计为$\theta_2 = 0.5$，当使用三个变量$x_1$，$x_2$，$x_2$ 来拟合时，由于$x_2$是共线性的，所以只需要满足$\theta_2 + \theta_3 = 0.5$就能达到同样的性能，这时候单独对于$\theta_2$和$\theta_3$而言有很高的自由度，所以方差也就增大了。
+
+尽管共线性会导致参数估计的方差过高，但这依然是一个无偏的估计，所以共线性在训练集上可能拟合得很好，但在测试集上就不一定，因为过高的方差抑制了模型的泛化能力。
 
 % subsubsection 共线性 (end)
 
-
-
-
 % subsection 线性回归 ( end)
+
+
+\subsection{Ridge 回归} % (fold)
+\label{sub:ridge_回归}
+接下来我们讨论一种称之为岭回归（Ridge Regression）的方法，这种方法大体上于线性回归类似，唯一不同的地方在于，目标函数加上了权值的二范数正则，即
+\begin{equation}\label{equ:mse_l2_loss}
+	\begin{split}
+		L(\theta) &= (\theta x - y)^2 + \alpha \sum_i\theta_i^2\\
+		 &= (\theta x - y)^2 + \alpha \theta\theta^T
+	\end{split}
+\end{equation}
+如果从拉格朗日乘子法的角度来看这个问题，那么这个目标函数实际上等价于带有不等式约束的极值问题，即
+\begin{equation}
+\begin{split}
+	&L(\theta) = (\theta x - y)^2 \\
+    &s.t.\text{~} \sum_i\theta_i^2 \leq C
+\end{split}
+\end{equation}
+那么式\ref{equ:mse_l2_loss}实际上近似于构造出来的拉格朗日函数\footnote{无关项被省略或合并了，所以不完全等价于拉格朗日函数}。根据拉格朗日乘子法的套路，目标函数\ref{equ:mse_l2_loss}的极值等于函数\footnote{比如这里的平方误差}在可行域\footnote{比如这里的超球体}上的极值，一个二维空间下的形象描述如图\ref{fig:L2_lang}所示。
+
+\input{part/supervised-learning/images/L2_lang}
+
+对于图\ref{fig:L2_lang}(a)中最优解落在可行域的情况，二范数正则并不影响参数估计的结果，此时参数估计依然是无偏的。但实际场景中往往是图\ref{fig:L2_lang}(b)中的情况，即最优解落在可行之外的情况，此时参数估计是有偏的，并且，由于约束条件下的极值为目标函数于可行域的切面，而可行域是以原点为球心，以微小量为半径的超球体，这将使得参数最终的估计值是一个较小的值，为了进一步说明这个现象，我们不妨对式\ref{equ:mse_l2_loss}中的准则函数进行求导
+\begin{equation}
+\begin{split}
+	\frac{\partial L(\theta)}{\partial \theta} &= \frac{\partial(\theta x - y)^2}{\partial \theta} + 2\alpha \theta\\
+	&= \nabla_{\theta} + 2\alpha \theta
+\end{split}
+\end{equation}
+当使用梯度下降进行训练是，参数的更新方式为
+\begin{equation}
+	\theta := \theta -\eta (\nabla_{\theta} + 2\alpha \theta)
+\end{equation}
+其中,$\eta$是学习率，由于$\alpha$是超参数，当其选取为
+\begin{equation}
+	\alpha = \frac{1 - \eta}{2\eta}
+\end{equation}
+则有
+\begin{equation}
+\begin{split}
+	\theta &:= \theta -\eta (\nabla_{\theta} + \frac{1-\eta}{\eta} \theta)\\
+	&= \theta - \eta\nabla_{\theta} - (1-\eta)\theta\\
+	&=\eta(\theta - \nabla_{\theta})
+ \end{split}
+\end{equation}
+这其实等价于两个参数更新过程，首先执行梯度更新，即$\theta - \nabla_{\theta}$，然后在将更新后的参数按$\eta$进行缩小，这种技术也被称为权衰减，所以我们说，权衰减等价于L2正则。
+
+如果从罚函数的观点看L2正则，那么对于罚函数$\theta\theta^T$而言，当$\theta$较大时，惩罚项也较大，当$\theta$趋于0时，惩罚项趋于0，但此时梯度$\theta$也相应地趋于0，因此$\nabla_{\theta}$在这时候成为主导地位，所以$\theta$很难收敛到0，除非正则的权重设置得很大。
+
+接下来我们讨论一下为什么加了L2正则的线性回归被称为岭回归
+
+
+
+
+
+% subsection ridge_回归 (end)
+
+
+
 
 
 
@@ -195,10 +314,7 @@ X^TX\theta = X^TY
 
 % subsection lasso_回归 (end)
 
-\subsection{Ridge 回归} % (fold)
-\label{sub:ridge_回归}
 
-% subsection ridge_回归 (end)
 
 \subsection{ElasticNet} % (fold)
 \label{sub:elasticnet}

@@ -1,0 +1,27 @@
+\lstset{language=Python}
+\begin{lstlisting}[caption={波士顿房价问题的共线性问题\label{code:boston_house_price_co_linear}}]
+import numpy as np
+from sklearn.datasets import load_boston
+from scipy.linalg import inv
+from numpy.random import choice
+np.set_printoptions(suppress=True)
+
+x, y = load_boston(return_X_y=True)
+x = np.vstack((
+    x[:, 5],
+    x[:, 8],
+    x[:, 9],
+    np.ones_like(y)
+)).T
+y = y.reshape(-1, 1)
+theta = []
+
+for i in range(100000):
+    selected = choice(500, 506)
+    _x, _y = x[selected], y[selected]
+    invert = np.dot(inv(np.dot(_x.T, _x)), _x.T)
+    theta.append(np.dot(invert, _y).reshape(-1))
+
+print(np.std(theta, axis=0))
+# [ 0.67893113  0.0691722   0.00324108  4.7449336 ]
+\end{lstlisting}
