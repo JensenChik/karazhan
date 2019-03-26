@@ -83,7 +83,7 @@
 其中，我们称$(X^TX)^{-1}X^T$为$X$的伪逆矩阵
 
 更一般的，$(X^TX)$并不一定可逆，当不可逆时，往往会加上一个微小量的对角矩阵，因此，通用的解为
-\begin{equation}
+\begin{equation}\label{equ:linear_regress_approx_solve}
 	\theta = \lim_{\epsilon\rightarrow 0}(X^TX + \epsilon I)^{-1}X^TY
 \end{equation}
 
@@ -254,14 +254,14 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 接下来我们讨论一种称之为岭回归（Ridge Regression）的方法，这种方法大体上于线性回归类似，唯一不同的地方在于，目标函数加上了权值的二范数正则，即
 \begin{equation}\label{equ:mse_l2_loss}
 	\begin{split}
-		L(\theta) &= (\theta x - y)^2 + \alpha \sum_i\theta_i^2\\
-		 &= (\theta x - y)^2 + \alpha \theta\theta^T
+		L(\theta) &= (X\theta  - Y)^2 + \alpha \sum_i\theta_i^2\\
+		 &= (X\theta - Y)^2 + \alpha \theta\theta^T
 	\end{split}
 \end{equation}
 如果从拉格朗日乘子法的角度来看这个问题，那么这个目标函数实际上等价于带有不等式约束的极值问题，即
 \begin{equation}
 \begin{split}
-	&L(\theta) = (\theta x - y)^2 \\
+	&L(\theta) = (X\theta - Y)^2 \\
     &s.t.\text{~} \sum_i\theta_i^2 \leq C
 \end{split}
 \end{equation}
@@ -272,8 +272,8 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 对于图\ref{fig:L2_lang}(a)中最优解落在可行域的情况，二范数正则并不影响参数估计的结果，此时参数估计依然是无偏的。但实际场景中往往是图\ref{fig:L2_lang}(b)中的情况，即最优解落在可行之外的情况，此时参数估计是有偏的，并且，由于约束条件下的极值为目标函数于可行域的切面，而可行域是以原点为球心，以微小量为半径的超球体，这将使得参数最终的估计值是一个较小的值，为了进一步说明这个现象，我们不妨对式\ref{equ:mse_l2_loss}中的准则函数进行求导
 \begin{equation}
 \begin{split}
-	\frac{\partial L(\theta)}{\partial \theta} &= \frac{\partial(\theta x - y)^2}{\partial \theta} + 2\alpha \theta\\
-	&= \nabla_{\theta} + 2\alpha \theta
+	\frac{\partial L(\theta)}{\partial \theta} &= \frac{\partial(X\theta  - Y)^2}{\partial \theta} + 2\alpha \theta\\
+	&= \nabla_{MSE} + 2\alpha \theta
 \end{split}
 \end{equation}
 当使用梯度下降进行训练是，参数的更新方式为
@@ -296,8 +296,20 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 
 如果从罚函数的观点看L2正则，那么对于罚函数$\theta\theta^T$而言，当$\theta$较大时，惩罚项也较大，当$\theta$趋于0时，惩罚项趋于0，但此时梯度$\theta$也相应地趋于0，因此$\nabla_{\theta}$在这时候成为主导地位，所以$\theta$很难收敛到0，除非正则的权重设置得很大。
 
-接下来我们讨论一下为什么加了L2正则的线性回归被称为岭回归
+接下来我们讨论一下为什么加了L2正则的线性回归被称为岭回归。对于目标函数\ref{equ:mse_l2_loss}，其极值所在点为导数为0处，即
+\begin{equation}
+	2X^T(\theta X - Y) + 2\alpha\theta = 0
+\end{equation}
+则
+\begin{equation}
+	\theta = (X^TX + \alpha I)^{-1}X^TY
+\end{equation}
+可以看到，这个结果于式\ref{equ:linear_regress_approx_solve}是等价的。由于$X^TX + \alpha I$存在一个微小量$\alpha I$，所以它的逆是必定存在的，不需要考虑不可逆的问题，同时，正是因为在$X^TX$的对角线上加了这个微小量，值增高了它的“岭”，所以称为岭回归或脊回归。 另一方面，正如我们在图\ref{fig:L2_lang}中看到的，加入了L2范数正则后，参数估计不再保证无偏性。
 
+我们从贝叶斯的角度来讨论一下L2正则，现在，模型的参数$\theta$不再认为是客观存在但未知的变量，而是一个概率分布，这也是贝叶斯学派和经典学派的分歧点，即，模型的参数是客观存在的，还是一个概率分布。我们假设，$\theta$服从一个均值为0，方差恒定的高斯分布，即
+\begin{equation}
+	\theta \sim \mathcal{N}(0, \sigma_\theta^2)
+\end{equation}
 
 
 
