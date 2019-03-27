@@ -128,7 +128,7 @@ X^TX\theta = X^TY
 
 那么对于每一个样本$(x_i, y_i)$，得到的残差概率为
 \begin{equation}
-	P(x_i, y_i, \sigma^2|\theta) = \frac{1}{\sqrt{2\pi\sigma^2}}
+	P(x_i, y_i|\theta) = \frac{1}{\sqrt{2\pi\sigma^2}}
 	\exp\Bigg(-\frac{(y_i - \theta x_i)^2}{2\sigma^2}\Bigg)
 \end{equation}
 常数项对于对数似然最大化没有影响，因此
@@ -292,7 +292,7 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 	&=\eta(\theta - \nabla_{\theta})
  \end{split}
 \end{equation}
-这其实等价于两个参数更新过程，首先执行梯度更新，即$\theta - \nabla_{\theta}$，然后在将更新后的参数按$\eta$进行缩小，这种技术也被称为权衰减，所以我们说，权衰减等价于L2正则。
+这其实等价于两个参数更新过程，首先执行梯度更新，即$\theta - \nabla_{\theta}$，然后再将更新后的参数按$\eta$进行缩小，这种技术也被称为权衰减，所以我们说，权衰减等价于L2正则。
 
 如果从罚函数的观点看L2正则，那么对于罚函数$\theta\theta^T$而言，当$\theta$较大时，惩罚项也较大，当$\theta$趋于0时，惩罚项趋于0，但此时梯度$\theta$也相应地趋于0，因此$\nabla_{\theta}$在这时候成为主导地位，所以$\theta$很难收敛到0，除非正则的权重设置得很大。
 
@@ -310,7 +310,30 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 \begin{equation}
 	\theta \sim \mathcal{N}(0, \sigma_\theta^2)
 \end{equation}
-
+并且，与线性回归中讨论的类似，我们依然假设回归的残差服从均值为0，方差恒定的高斯分布
+\begin{equation}
+	\epsilon \sim \mathcal{N}(0, \sigma_\epsilon^2)
+\end{equation}
+那么对于$\theta$的后验概率，有
+\begin{equation}
+	p(\theta|x, y) = \frac{p(x, y| \theta)p(\theta)}{p(x, y)} 
+	= \frac{(2\pi\sigma_\epsilon^2)^{-\frac{1}{2}}\exp\Big(-\frac{(X\theta - Y)^2}{2\sigma_\epsilon^2}\Big)
+	(2\pi\sigma_\theta^2)^{-\frac{1}{2}}\exp\Big(-\frac{\theta^T\theta}{2\sigma_\epsilon^2}\Big)
+	}{P(x, y)}
+\end{equation}
+由于分母为归一化因子\footnote{为了保证概率第三公理成立}，所以是一个常数项，此外，其他的常数项对于最大化后验概率没有影响，因此
+\begin{equation}
+	p(\theta|x, y) \propto
+	\exp\Big(-\frac{(X\theta - Y)^2}{2\sigma_\epsilon^2}\Big)
+	\exp\Big(-\frac{\theta^T\theta}{2\sigma_\epsilon^2}\Big)
+\end{equation}
+由于这是一个单调函数，对其取对数变换不影响极值的解，因此
+\begin{equation}
+	\log p(\theta|x, y) \propto
+	-(X\theta - Y)^2
+	-\theta^T\theta
+\end{equation}
+因此，为了最大化后验概率，实际上等价于最小化带L2正则的平方误差。
 
 
 
