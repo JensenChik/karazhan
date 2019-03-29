@@ -304,7 +304,16 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 \begin{equation}
 	\theta = (X^TX + \alpha I)^{-1}X^TY
 \end{equation}
-可以看到，这个结果于式\ref{equ:linear_regress_approx_solve}是等价的。由于$X^TX + \alpha I$存在一个微小量$\alpha I$，所以它的逆是必定存在的，不需要考虑不可逆的问题，同时，正是因为在$X^TX$的对角线上加了这个微小量，值增高了它的“岭”，所以称为岭回归或脊回归。 另一方面，正如我们在图\ref{fig:L2_lang}中看到的，加入了L2范数正则后，参数估计不再保证无偏性。
+可以看到，这个结果于式\ref{equ:linear_regress_approx_solve}是等价的。由于$X^TX + \alpha I$存在一个微小量$\alpha I$，所以它的逆是必定存在的，不需要考虑不可逆的问题，同时，正是因为在$X^TX$的对角线上加了这个微小量，值增高了它的“岭”，所以称为岭回归或脊回归。 另一方面，正如我们在图\ref{fig:L2_lang}中看到的，加入了L2范数正则后，参数估计不再保证无偏性，因为此时
+\begin{equation}
+\begin{split}
+E(\hat{\theta}) &=E\big[(X^TX + \lambda I)^{-1}X^TY\big]\\
+&=E\big[(X^TX + \lambda I)^{-1}X^T(X\theta + \epsilon)\big]\\
+&=(X^TX + \lambda I)^{-1}X^TX\theta 
+	+  (X^TX + \lambda I)^{-1}X^T E\big(\epsilon)\\
+&=(X^TX + \lambda I)^{-1}X^TX\theta 
+ \end{split}
+\end{equation}
 
 我们从贝叶斯的角度来讨论一下L2正则，现在，模型的参数$\theta$不再认为是客观存在但未知的变量，而是一个概率分布，这也是贝叶斯学派和经典学派的分歧点，即，模型的参数是客观存在的，还是一个概率分布。我们假设，$\theta$服从一个均值为0，方差恒定的高斯分布，即
 \begin{equation}
@@ -335,6 +344,7 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 \end{equation}
 因此，为了最大化后验概率，实际上等价于最小化带L2正则的平方误差。
 
+接下来我们从主成分分析的角度来讨论L2正则为什么可以降低参数估计的方差。
 
 
 % subsection ridge_回归 (end)
