@@ -294,28 +294,24 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 \end{equation}
 这其实等价于两个参数更新过程，首先执行梯度更新，即$\theta - \nabla_{\theta}$，然后再将更新后的参数按$\eta$进行缩小，这种技术也被称为权衰减，所以我们说，权衰减等价于L2正则。
 
-如果从罚函数的观点看L2正则，那么对于罚函数$\theta\theta^T$而言，当$\theta$较大时，惩罚项也较大，当$\theta$趋于0时，惩罚项趋于0，但此时梯度$\theta$也相应地趋于0，因此$\nabla_{\theta}$在这时候成为主导地位，所以$\theta$很难收敛到0，除非正则的权重设置得很大。
+如果从罚函数的观点看L2正则，那么对于罚函数$\theta\theta^T$而言，当$\theta$较大时，惩罚项也较大，当$\theta$趋于0时，惩罚项趋于0，但此时梯度$\theta$也相应地趋于0，因此$\nabla_{\theta}$在这时候成为主导地位，此时$\theta$有可能会增大，所以$\theta$很难收敛到0。
+
 
 接下来我们讨论一下为什么加了L2正则的线性回归被称为岭回归。对于目标函数\ref{equ:mse_l2_loss}，其极值所在点为导数为0处，即
 \begin{equation}
 	2X^T(\theta X - Y) + 2\alpha\theta = 0
 \end{equation}
 则
-\begin{equation}
+\begin{equation}\label{equ:L2_theta}
 	\theta = (X^TX + \alpha I)^{-1}X^TY
 \end{equation}
-可以看到，这个结果于式\ref{equ:linear_regress_approx_solve}是等价的。由于$X^TX + \alpha I$存在一个微小量$\alpha I$，所以它的逆是必定存在的，不需要考虑不可逆的问题，同时，正是因为在$X^TX$的对角线上加了这个微小量，值增高了它的“岭”，所以称为岭回归或脊回归。 另一方面，正如我们在图\ref{fig:L2_lang}中看到的，加入了L2范数正则后，参数估计不再保证无偏性，因为此时
-\begin{equation}
-\begin{split}
-E(\hat{\theta}) &=E\big[(X^TX + \lambda I)^{-1}X^TY\big]\\
-&=E\big[(X^TX + \lambda I)^{-1}X^T(X\theta + \epsilon)\big]\\
-&=(X^TX + \lambda I)^{-1}X^TX\theta 
-	+  (X^TX + \lambda I)^{-1}X^T E\big(\epsilon)\\
-&=(X^TX + \lambda I)^{-1}X^TX\theta 
- \end{split}
-\end{equation}
+可以看到，这个结果于式\ref{equ:linear_regress_approx_solve}是等价的。由于$X^TX + \alpha I$存在一个微小量$\alpha I$，所以它的逆是必定存在的，不需要考虑不可逆的问题，同时，正是因为在$X^TX$的对角线上加了这个微小量，相当于增高了它的“岭”，所以称为岭回归或脊回归。 
 
-我们从贝叶斯的角度来讨论一下L2正则，现在，模型的参数$\theta$不再认为是客观存在但未知的变量，而是一个概率分布，这也是贝叶斯学派和经典学派的分歧点，即，模型的参数是客观存在的，还是一个概率分布。我们假设，$\theta$服从一个均值为0，方差恒定的高斯分布，即
+\input{part/supervised-learning/images/L2_ridge_trace}
+
+我们可以绘制绘制出岭迹线如图\ref{fig:L2_ridge_trace}所示。其中，自变量我们选取的是住宅平均房间数，因变量选取的是房价。图\ref{fig:L2_ridge_trace}(b)中的$x$轴是岭的增幅，也就是L2正则的强度，$y$轴是偏置项的估计值，我们可以看到，随着正则的强度加大，偏置项的估计值逐步降低，而对应的，图\ref{fig:L2_ridge_trace}(a)表明，随着正则的强度加大，自变量的参数估计值反而逐步增大，之所以出现这种现象是因为自变量的参数估计本身处于一个较小的值（0.35）左右，而偏执项的估计处于较大的值（0.71）左右，L2正则会衰减较大的值，也就是偏置项的参数估计，对于较小的值，也就是自变量的参数估计，L2的地位低于误差函数的地位，所以为了降低误差，自变量的参数估计便会升高，最后会得到相对平滑的参数估计。为了更清晰地说明这一点，我们需要从贝叶斯的角度来考虑L2正则这个问题。
+
+在贝叶斯的视角下，现在，模型的参数$\theta$不再认为是客观存在但未知的变量，而是一个随机变量，这也是贝叶斯学派和经典学派的分歧点，即，模型的参数是客观存在的，还是一个随机变量。我们假设，$\theta$服从一个均值为0，方差恒定的高斯分布，即
 \begin{equation}
 	\theta \sim \mathcal{N}(0, \sigma_\theta^2)
 \end{equation}
@@ -344,7 +340,121 @@ E(\hat{\theta}) &=E\big[(X^TX + \lambda I)^{-1}X^TY\big]\\
 \end{equation}
 因此，为了最大化后验概率，实际上等价于最小化带L2正则的平方误差。
 
-接下来我们从主成分分析的角度来讨论L2正则为什么可以降低参数估计的方差。
+\input{part/supervised-learning/images/L2_hist}
+
+
+另一方面，正如我们在图\ref{fig:L2_hist}中看到的，加入了L2范数正则后，参数估计不再保证无偏性，因为此时
+
+\begin{equation}\label{equ:L2_theta_expect}
+\begin{split}
+E(\hat{\theta}) &=E\big[(X^TX + \alpha I)^{-1}X^TY\big]\\
+&=E\big[(X^TX + \alpha I)^{-1}X^T(X\theta + \epsilon)\big]\\
+&=(X^TX + \alpha I)^{-1}X^TX\theta 
+	+  (X^TX + \alpha I)^{-1}X^T E\big(\epsilon)\\
+&=(X^TX + \alpha I)^{-1}X^TX\theta 
+ \end{split}
+\end{equation}
+
+因此，L2正则相当于对参数估计引入了偏差，但同时也带来了它的好处：降低了参数估计的方差。为了更严谨地证明这一点，我们首先需要引入奇异值分解的概念。对于任何一个矩阵 $X\in \mathbf{R}^{m\times n}$，都能分解成三个矩阵相乘
+\begin{equation}
+	X = U\Sigma V^T
+\end{equation}
+其中，$U \in \mathbf{R}^{m\times m}$和$V \in \mathbf{R}^{n\times n}$是正交矩阵\footnote{如果在酉空间下则为$X = U\Sigma V^H$，$U$和$V$此时为酉矩阵}，即满足$UU^T = I$ 和 $VV^T = I$，并且$\Sigma \in \mathbf{R}^{m\times n} = \begin{bmatrix}
+	\Sigma_1 & O\\
+	O &  O\\
+\end{bmatrix}
+$满足 $\Sigma_1 = diag(\lambda_1, \lambda_2, \cdots, \lambda_r)$，$r = rank(X)$，并且对于任意的 $i > j$，$\lambda_i \geq \lambda_j > 0$
+
+对于$\hat{\theta}$参数估计的协方差，有
+\begin{equation}
+	cov(\hat{\theta}, \hat{\theta}) = E\Big[\big(\hat{\theta} - E(\hat{\theta})\big)\big(\hat{\theta} - E(\hat{\theta})\big)^T\Big]\\
+\end{equation}
+代入\ref{equ:L2_theta_expect}，有
+\begin{equation}
+	cov(\hat{\theta}, \hat{\theta}) = 
+	E\Big[\big(\hat{\theta} - (X^TX + \alpha I)^{-1}X^TX\theta \big) 
+	\big(\hat{\theta} - (X^TX + \alpha I)^{-1}X^TX\theta \big)^T\Big]
+\end{equation}
+由于
+\begin{equation}
+\begin{split}
+	\hat{\theta} - (X^TX + \alpha I)^{-1}X^TX\theta &= 
+	(X^TX + \alpha I)^{-1}X^TY - (X^TX + \alpha I)^{-1}X^TX\theta\\
+	&= (X^TX + \alpha I)^{-1}X^T(X\theta + \epsilon) - (X^TX + \alpha I)^{-1}X^TX\theta\\
+	&= (X^TX + \alpha I)^{-1}X^T\epsilon
+\end{split}
+\end{equation}
+因此
+\begin{equation}
+cov(\hat{\theta}, \hat{\theta})	
+= E\Big[
+(X^TX + \alpha I)^{-1}X^T\epsilon
+\epsilon^T X (X^TX + \alpha I)^{-T}\footnote{由于$(A^{-1})^T = (A^{T})^{-1}$，因此我们简写为$A^{-T}$}
+\Big]
+\end{equation}
+再整理整理，最后我们得到
+\begin{equation}
+	cov(\hat{\theta}, \hat{\theta}) = \sigma^2(X^TX + \alpha I)^{-1}X^T
+	X (X^TX + \alpha I)^{-T}
+\end{equation}
+其中，$\sigma^2$是$\theta$残差的方差。接下来我们对$X$进行SVD分解，则
+\begin{equation}
+\begin{split}
+	cov(\hat{\theta}, \hat{\theta}) &= \sigma^2
+	(V\Sigma^TU^TU\Sigma V^T + \alpha VV^T)^{-1}
+	V\Sigma^TU^TU\Sigma V^T
+	(V\Sigma^TU^TU\Sigma V^T + \alpha VV^T)^{-T}\\
+	&= \sigma^2
+	\big(V(\Sigma^2+\alpha I)V^T\big)^{-1}
+	V\Sigma^2V^T
+	\big(V(\Sigma^2+\alpha I)V^T\big)^{-T}\\
+	&=\sigma^2
+	V^{-T}(\Sigma^2+\alpha I)^{-1}V^{-1}
+	V\Sigma^2V^T
+	V^{-T}(\Sigma^2 + \alpha I)^{-T}V^{-1}\\
+	&=\sigma^2
+	V^{-T}(\Sigma^2 + \alpha I)^{-1}
+	\Sigma^2
+	(\Sigma^2 + \alpha I)^{-T}V^{-1}\\
+\end{split}
+\end{equation}
+同样的，我们以协方差的迹衡量参数估计的方差，并且由于迹的性质
+\begin{equation}
+	tr(ABC) = tr(BCA)
+\end{equation}
+因此岭回归参数估计的方差为
+\begin{equation}
+\begin{split}
+	tr\big(cov(\hat{\theta}, \hat{\theta})\big) &= \sigma^2 
+	tr\big(
+	(\Sigma^2 + \alpha I)^{-1}
+	\Sigma^2
+	(\Sigma^2 + \alpha I)^{-T}
+	\big) \\ 
+	&= \sigma^2 tr
+	\begin{bmatrix}
+	\frac{\lambda_i^2}{(\lambda_i^2 + \alpha)^2} & O \\
+	O  &  O
+	\end{bmatrix}\\
+	&= \sigma^2 \sum_{i=0}^r \frac{\lambda_i^2}{(\lambda_i^2 + \alpha)^2}
+\end{split}
+\end{equation}
+其中$r = rank(X)$。同样的处理，对于线性回归中参数估计的协方差矩阵的迹
+\begin{equation}
+\begin{split}
+	tr\big(cov(\hat{\theta}, \hat{\theta})\big) &= \sigma^2tr(X^TX)^{-T} = \sigma^2 tr(V\Sigma^TU^T U\Sigma V^T)^{-T}\\
+	&= \sigma^2 tr\big(V^{-T}(\Sigma^2)^{-T} V^{-1}\big) \\
+	&= \sigma^2 tr \begin{bmatrix}
+	\frac{1}{\lambda_i^2} & O \\
+	O & O \\
+	\end{bmatrix} = \sigma^2 \sum_{i=0}^r \frac{1}{\lambda_i^2}
+\end{split}
+\end{equation}
+对于任意的$\lambda > 0$，$\alpha > 0$，不等式
+$\frac{\lambda^2}{(\lambda^2 + \alpha)^ 2} < \frac{1}{\lambda^2}$
+恒成立，所以岭回归可以降低参数估计的方差。
+
+
 
 
 % subsection ridge_回归 (end)
