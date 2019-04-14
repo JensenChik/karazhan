@@ -336,7 +336,7 @@ Cov(\hat{\theta}, \hat{\theta}) &= E\Big[\big(\hat{\theta} - E(\hat{\theta})\big
 \begin{equation}
 	\log p(\theta|x, y) \propto
 	-(X\theta - Y)^2
-	-\theta^T\theta
+	-\lambda \theta^T\theta
 \end{equation}
 因此，为了最大化后验概率，实际上等价于最小化带L2正则的平方误差。
 
@@ -467,17 +467,18 @@ $\frac{\lambda^2}{(\lambda^2 + \alpha)^ 2} < \frac{1}{\lambda^2}$
 \subsection{Lasso 回归} % (fold)
 \label{sub:lasso_回归}
 在这一小节中，我们将会介绍与Ridge回归类似的正则化技术，称之为Lasso（Least absolute shrinkage and selection operator）回归\footnote{中文有时称之为套索回归，源自单词Lasso的释义}。在Lasso回归中，目标函数不再使用L2正则，取而代之的是L1正则，即
-\begin{equation}
+\begin{equation} \label{equ:L1_loss}
 	L(\theta) = (X\theta -Y)^2 + \alpha ||\theta||
 \end{equation}
 在拉格朗日乘子法的视角下，这个目标函数相当于优化带有约束条件的极值问题，即
-\begin{equation}
+\begin{equation}\label{equ:lang_L1}
 	\begin{split}
 		&L(\theta) = (X\theta -Y)^2 \\
 		&s.t. ||\theta|| \leq C
 	\end{split}
 \end{equation}
-与Ridge回归类似的，我们可以绘制出可行域于目标函数的等势线如图todo所示。从图中我们可以看到，与L2正则收敛到平滑解所不同的是，L1正则更倾向于收敛到稀疏解，这是因为对于带有L1正则的目标函数，其梯度为
+\input{part/supervised-learning/images/L1_lang}
+与Ridge回归类似的，我们可以绘制出可行域于目标函数的等势线如图\ref{fig:L1_lang}所示。从图中我们可以看到，与L2正则收敛到平滑解所不同的是，L1正则更倾向于收敛到稀疏解，这是因为对于带有L1正则的目标函数，其梯度为
 \begin{equation}\label{equ:L1_grad}
 	\frac{\partial L(\theta)}{\partial \theta} = 2X^T(X\theta - Y) + \alpha sign(\theta)
 \end{equation}
@@ -490,7 +491,77 @@ $\frac{\lambda^2}{(\lambda^2 + \alpha)^ 2} < \frac{1}{\lambda^2}$
 	\end{array}
 	\right.
 \end{equation}
-可以看到，在L1正则中，由于符号函数的存在，即使参数$\theta$处于一个较小的值，正则化强度依然为$\alpha$，正则化方向的梯度不会消失，而相对应的，在L2正则中，当参数$\theta$处于较小值时，正则化强度随着$\theta$的减小而成平方级的减小，所以相比于L2正则，L1正则能驱动参数一直往0收缩，最后得到稀疏的解，即大部分参数为0，小部分参数不为0。同时，也由于导数中引入了符号函数，所以$\theta$的参数估计没有解析解，只有数值解，因为这是一个多解问题，只要满足式\ref{equ:L1_grad}的$\theta$都是最优解。
+可以看到，在L1正则中，由于符号函数的存在，即使参数$\theta$处于一个较小的值，正则化强度依然为$\alpha$，正则化方向的梯度不会消失，而相对应的，在L2正则中，当参数$\theta$处于较小值时，正则化强度随着$\theta$的减小而成平方级的减小，所以相比于L2正则，L1正则能驱动参数一直往0收缩，最后得到稀疏的解，即大部分参数为0，小部分参数不为0。
+
+我们不妨举一个具体的例子，假设有一个2维向量$\theta = (1, \varepsilon)$，其中$\varepsilon$是一个大于0的微小量，那么它对应的L1和L2正则强度为
+\begin{equation}
+\begin{split}
+	&||\theta||_1 = 1+ \varepsilon\\
+	&||\theta||_2 = 1 + \varepsilon^2
+\end{split}
+\end{equation}
+
+为了得到一个稀疏解，我们期望对$\theta = (1, \varepsilon)$中的某一个维度上迈出一个$\eta < \varepsilon$的步伐，如果这个步伐迈在第一个维度上，也就是$\theta$变成了$\theta = (1-\eta, \varepsilon)$，那么对应的L1和L2正则强度为
+\begin{equation}
+\begin{split}
+	&||\theta||_1 = 1 - \eta + \varepsilon\\
+	&||\theta||_2 = 1 + \eta^2 - 2\eta + \varepsilon^2
+\end{split}
+\end{equation}
+而如果这个步伐迈在第二个维度上，也就是$\theta$变成了$\theta = (1, \varepsilon - \eta)$，那么对应的L1和L2正则强度为
+\begin{equation}
+\begin{split}
+	&||\theta||_1 = 1 - \eta + \varepsilon\\
+	&||\theta||_2 = 1 + \eta^2 - 2\eta\varepsilon + \varepsilon^2
+\end{split}
+\end{equation}
+可以看到，对于两个方向上的步伐，L1正则的强度是相同的，所以L1完全可以使得$\varepsilon$收敛到0，而对于L2正则，由于微小量$\varepsilon < 1$，因此$1 + \eta^2 - 2\eta + \varepsilon^2 < 1 + \eta^2 - 2\eta\varepsilon + \varepsilon^2$，所以在 1 上迈步伐要比在$\varepsilon$上迈步伐得到更小的惩罚，那么L2正则在$\varepsilon$趋于0的时候更倾向于惩罚1而不是惩罚$\varepsilon$。
+
+另一方面，也由于导数中引入了符号函数，所以$\theta$的参数估计没有解析解，只有数值解，只要使得式\ref{equ:L1_grad}等于0的$\theta$都是最优解。对于最优解，只有两种可能：要么最优解是唯一解，要么最优解是无穷解，我们不妨来证明一下。
+
+首先要明确的一点是，Lasso的目标函数是凸函数，因为式\ref{equ:L1_loss}中加法的两个成分，满足琴生不等式\footnote{根据凸函数的定义，
+若$\frac{f(x_1) + f(x_2)}{2} \geq f(\frac{x_1 + x_2}{2})$，则$f$为凸函数，注意，这里所说的凸函数与国内的教材不一致，比如$x^2$这里称为凸函数，国内称为凹函数}（Jensen Inequality），并且由于凸函数之和仍是凸函数，所以式\ref{equ:L1_loss}是凸函数。并且这个函数没有回收方向（directions of recession），因此这个问题至少存在一个最优解\footnote{详细证明可参考\cite{rockafellar2015convex}中的定理27.1}。如果这个问题至少存在两个最优解$\theta_1$和$\theta_2$并且$\theta_1 \neq \theta2$，那么这个问题就存在无穷多的解，这些解满足
+\begin{equation}
+	\theta = \alpha \theta_1 + (1-\alpha)\theta_2
+\end{equation}
+其中$0<\alpha<1$。这个结论之所以成立是因为凸函数的解集合（Convex solution sets）必定是凸集：
+\begin{itemize}
+	\item 当优化问题无解时，解空间为空集，命题成立
+	\item 当优化问题只有唯一解时，解是空间上的一点，命题成立
+	\item 当优化问题存在两个解时，解是一条线段或超平面，命题成立
+\end{itemize}
+前两点是显然的，我们主要证明第三点，假设$\theta_1$和$\theta_2$是带有约束约束条件最优化问题
+\begin{equation}\label{equ:lang_L1}
+	\begin{split}
+		&\arg\min L(\theta)\\
+		&s.t. g_i(\theta) \leq 0
+	\end{split}
+\end{equation}
+其中$L(\theta)$和$g_i(\theta)$都是凸函数，那么$\forall 0<\alpha<1$，满足
+\begin{equation}
+g_i\Big(\alpha\theta_1 + (1-\alpha)\theta_2\Big)
+\leq \alpha g_i(\theta_1) + (1-\alpha) g_i(\theta_2)\footnote{广义琴生不等式}\leq 0
+\end{equation}
+和
+\begin{equation}
+	f\Big(\alpha\theta_1 + (1-\alpha)\theta_2\Big) 
+\leq \alpha f(\theta_1) + (1-\alpha) f(\theta_2)
+= \alpha f_* + (1-\alpha)f_* = f_*
+\end{equation}
+其中$f_*$是$f(\theta)$的条件最优值。因此$\alpha\theta_1 + (1-\alpha)\theta_2$ 也是优化问题的一个解，由于$\alpha$有无穷个，所以解有无穷个。那么什么时候有唯一解，什么时候有无穷解呢？结论是，当$f(\theta)$关于$\theta$的二阶微分是半正定矩阵时，解唯一，否则解不唯一。在Lasso中，对于$f(\theta)$，也就是平方误差，其关于$\theta$的二阶微分为$X^TX$，样本数目$n$大于特征维度$p$，并且$X$满秩时，$X^TX$是半正定矩阵，此时解唯一，否则解不唯一
+
+即使在解不唯一的时候，$X\theta$也是唯一的，我们不妨假设两个最优解$\theta_1$和$\theta_2$满足$X\theta_1\neq X\theta_2$，那么$\forall 0 < \alpha < 1$，目标函数有
+\begin{equation}
+L\Big(\alpha\theta_1 + (1-\alpha)\theta_2 \Big)
+= \Big(X[\alpha\theta_1 + (1-\alpha)\theta_2 ] -Y\Big)^2 
++ \lambda ||\alpha\theta_1 + (1-\alpha)\theta_2 ||
+\end{equation}
+
+此外，还有一个有趣的现象，对于目标函数其导数为0处，即
+\begin{equation}
+	X^T(Y - X\theta) = sign(\theta)
+\end{equation}
+假设两个最优解$\theta_1$和$\theta_2$都能满足上式，由于$X\theta_1 = X\theta_2$\footnote{否则$(X\theta_1 - Y)^2$和$(X\theta_2-Y)^2$中必定有一个更优}，那么$sign(\theta_1) = sign(\theta_2)$，也就是说，在Lasso回归的所有最优解中，参数估计的符号是相同的，不存在某个$\theta_i$的符号与另一个$\theta_j$的符号不一致。
 
 与L2正则类似的，L1正则也牺牲了参数估计的无偏性，因为目标函数\ref{equ:L1_grad}等于0处的参数估计
 \begin{equation}
@@ -505,7 +576,32 @@ $\frac{\lambda^2}{(\lambda^2 + \alpha)^ 2} < \frac{1}{\lambda^2}$
 	E[sign(\hat{\theta})] = 0 
 \end{equation}
 这在实际问题中并不一定成立，与无偏估计的假设矛盾。
-	
+
+如果从贝叶斯的角度看L1正则，其等价于对参数有一个均值为0，尺度为$\sigma$的拉普拉斯分布$\mathcal{L}(0, \sigma)$先验，即
+\begin{equation}
+	\theta \sim \frac{1}{2\sigma} \exp(- \frac{|\theta|}{\sigma})
+\end{equation}
+则$\theta$ 的后验分布为
+\begin{equation}
+	p(\theta|X, Y) = \frac{p(X, Y| \theta)p(\theta)}{p(X, Y)} 
+	= \frac{(2\pi\sigma_\epsilon^2)^{-\frac{1}{2}}\exp\Big(-\frac{(X\theta - Y)^2}{2\sigma_\epsilon^2}\Big)
+	(2\sigma_\theta)^{-1}\exp\Big(-\frac{|\theta|}{\sigma_\epsilon}\Big)
+	}{P(x, y)}
+\end{equation}
+由于分母是归一化常数，有
+\begin{equation}
+p(\theta|X, Y) \propto 
+\exp\Big(-\frac{(X\theta - Y)^2}{2\sigma_\epsilon^2}\Big)
+\exp\Big(-\frac{|\theta|}{\sigma_\epsilon}\Big)
+\end{equation}
+取对数并不影响最大化后验概率，因此
+\begin{equation}
+	p(\theta|X, Y) \propto  -(X\theta - Y)^2 -\lambda |\theta|
+\end{equation}
+不难看出，最大化后验概率，等价于最小化带有L1正则的平方误差。
+
+
+使用Lasso进行特征选择的时候会存在两个问题，首先，若特征的维度$p$大于样本的数量$n$\footnote{这在互联网广告等很多场景中经常出现}，那么$Lasso$至多只会选择出$n$个特征，另一方面，如果特征中存在成组的特征（即多个特征相关但不等价），Lasso只会随机地选取其中一个，然后把剩余的忽略掉。
 
 % subsection lasso_回归 (end)
 
@@ -513,6 +609,7 @@ $\frac{\lambda^2}{(\lambda^2 + \alpha)^ 2} < \frac{1}{\lambda^2}$
 
 \subsection{ElasticNet} % (fold)
 \label{sub:elasticnet}
+
 
 % subsection elasticnet (end)
 
